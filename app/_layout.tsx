@@ -1,24 +1,47 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { View, StyleSheet } from 'react-native';
+import { Stack, usePathname } from 'expo-router';
+import { colors } from '../theme';
+import Rodape from '../components/Rodape';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
-
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+export default function Layout() {
+  const pathname = usePathname();
+  const pathNormalizado = pathname?.replace(/\/$/, '') || '';
+  const isHome = pathNormalizado === '' || pathNormalizado === '/index' || pathNormalizado === '/';
+  const mostrarRodape = !isHome;
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <View style={styles.container}>
+      <View style={styles.stackContainer}>
+        <Stack
+          screenOptions={{
+            headerStyle: { backgroundColor: colors.primary },
+            headerTintColor: colors.textOnPrimary,
+            headerTitleStyle: { fontWeight: '600', fontSize: 18 },
+            headerShadowVisible: false,
+            contentStyle: { backgroundColor: colors.background },
+            animation: 'slide_from_right',
+          }}
+        >
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="Table" options={{ title: 'Tabela' }} />
+          <Stack.Screen name="Breastfeeding" options={{ title: 'Amamentar' }} />
+          <Stack.Screen name="Baby" options={{ title: 'Bebê' }} />
+          <Stack.Screen name="Fraudas" options={{ title: 'Fraldas' }} />
+          <Stack.Screen name="Mamadeira" options={{ title: 'Mamadeiras' }} />
+          <Stack.Screen name="Sono" options={{ title: 'Sono' }} />
+        </Stack>
+      </View>
+      {mostrarRodape && <Rodape />}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  stackContainer: {
+    flex: 1,
+  },
+});

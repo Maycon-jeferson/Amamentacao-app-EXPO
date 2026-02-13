@@ -1,35 +1,47 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Stack, usePathname } from 'expo-router';
+import { StyleSheet, View } from 'react-native';
+import Rodape from '../components/Rodape';
+import { colors } from '../theme';
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+export default function Layout() {
+  const pathname = usePathname();
+  const pathNormalizado = pathname?.replace(/\/$/, '') || '';
+  const isHome = pathNormalizado === '' || pathNormalizado === '/index' || pathNormalizado === '/';
+  const mostrarRodape = !isHome;
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
-    </Tabs>
+    <View style={styles.container}>
+      <View style={styles.stackContainer}>
+        <Stack
+          screenOptions={{
+            headerStyle: { backgroundColor: colors.primary },
+            headerTintColor: colors.textOnPrimary,
+            headerTitleStyle: { fontWeight: '600', fontSize: 18 },
+            headerShadowVisible: false,
+            contentStyle: { backgroundColor: colors.background },
+            animation: 'slide_from_right',
+          }}
+        >
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="Table" options={{ title: 'Tabela' }} />
+          <Stack.Screen name="Breastfeeding" options={{ title: 'Amamentar' }} />
+          <Stack.Screen name="Baby" options={{ title: 'Bebê' }} />
+          <Stack.Screen name="Fraudas" options={{ title: 'Fraldas' }} />
+          <Stack.Screen name="Mamadeira" options={{ title: 'Mamadeiras' }} />
+          <Stack.Screen name="Sono" options={{ title: 'Sono' }} />
+        </Stack>
+      </View>
+      {mostrarRodape && <Rodape />}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  stackContainer: {
+    flex: 1,
+  },
+});
