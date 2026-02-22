@@ -310,19 +310,19 @@ const styles = StyleSheet.create({
   },
 
   /* RODAPÉ - réplica dos botões principais */
-  rodape: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    backgroundColor: colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    paddingBottom: Platform.OS === 'ios' ? 28 : 12,
-  },
+ rodape: {
+     flexDirection: 'row',
+     alignItems: 'center',
+     justifyContent: 'space-around',
+     backgroundColor: colors.surface,
+     borderTopWidth: 1,
+     borderTopColor: colors.border,
+     paddingVertical: 16,
+     paddingHorizontal: 16,
+     paddingBottom: Platform.OS === 'ios' ? 32 : 16,
+   },
   rodapeBtn: {
-    padding: 6,
+    padding: 8,
     borderRadius: 20,
   },
   rodapeBtnPressed: {
@@ -334,9 +334,9 @@ const styles = StyleSheet.create({
     borderColor: colors.accent,
   },
   rodapeIconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',

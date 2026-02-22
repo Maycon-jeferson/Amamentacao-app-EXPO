@@ -33,7 +33,7 @@ export default function Rodape() {
     return (
       <Link href={rota.href as any} asChild>
         <Pressable
-          style={({ pressed }) => [styles.rodapeItem, pressed && styles.rodapeItemPressed]}
+          style={({ pressed }) => [isCenter ? styles.rodapeItemHome : styles.rodapeItem, !isCenter && pressed && styles.rodapeItemPressed]}
           accessibilityLabel={rota.label}
         >
           {isCenter ? (
@@ -67,11 +67,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderTopWidth: 1,
     borderTopColor: colors.border,
-    paddingVertical: 12,
+    paddingVertical: 16,
     paddingHorizontal: 16,
-    paddingBottom: Platform.OS === 'ios' ? 28 : 12,
+    paddingBottom: Platform.OS === 'ios' ? 32 : 16,
   },
   rodapeItem: {
+    padding: 8,
+    borderRadius: 20,
+  },
+  rodapeItemHome: {
     padding: 8,
     borderRadius: 20,
   },
@@ -79,15 +83,15 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   iconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   icon: {
-    width: 26,
-    height: 26,
+    width: 32,
+    height: 32,
   },
 });
