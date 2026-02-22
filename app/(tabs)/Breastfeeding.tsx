@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
 import { Alert, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import BabyProfileSelector from '../../components/BabyProfileSelector';
 import { colors } from '../../constants/theme';
 
 const cardShadow = Platform.select({
@@ -20,6 +21,9 @@ export default function BreastFeeding() {
   const [timerSeconds, setTimerSeconds] = useState<number>(0);
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
   const [timerStarted, setTimerStarted] = useState<boolean>(false);
+  const [records, setRecords] = useState<any[]>([]);
+  const [activeProfile, setActiveProfile] = useState<any | null>(null);
+
 
   useEffect(() => {
     let interval: number | undefined;
@@ -35,11 +39,35 @@ export default function BreastFeeding() {
     };
   }, [isTimerRunning]);
 
-  const formatTime = (seconds: number): string => {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  useEffect(() => {
+    loadRecords();
+    loadActiveProfile();
+  }, []);
+
+  async function loadRecords() {
+    try {
+      const raw = await AsyncStorage.getItem('breastfeedingRecords');
+      const loaded = raw ? JSON.parse(raw) : [];
+      setRecords(loaded);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function loadActiveProfile() {
+    try {
+      const profilesRaw = await AsyncStorage.getItem('babyProfiles');
+      const activeRaw = await AsyncStorage.getItem('activeProfileIndex');
+      if (profilesRaw) {
+        const profiles = JSON.parse(profilesRaw);
+        const idx = activeRaw ? parseInt(activeRaw, 10) : 0;
+        const active = profiles[Math.min(idx, profiles.length - 1)];
+        setActiveProfile(active ?? null);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
 
   const openModal = (side: 'L' | 'R') => {
     setSelectedSide(side);
@@ -76,13 +104,16 @@ export default function BreastFeeding() {
       hora: now.toLocaleTimeString('pt-BR'),
       data: now.toLocaleDateString('pt-BR'),
       dataCompleta: now.toISOString(),
+      babyName: activeProfile?.name ?? '—',
+      feedingType: activeProfile?.feeding ?? '—',
     };
 
     try {
       const existingData = await AsyncStorage.getItem('breastfeedingRecords');
-      const records = existingData ? JSON.parse(existingData) : [];
-      records.push(breastfeedingRecord);
-      await AsyncStorage.setItem('breastfeedingRecords', JSON.stringify(records));
+      const loaded = existingData ? JSON.parse(existingData) : [];
+      loaded.push(breastfeedingRecord);
+      await AsyncStorage.setItem('breastfeedingRecords', JSON.stringify(loaded));
+      setRecords(loaded);
       setSavedTime(timerSeconds);
       closeModal();
     } catch (error) {
@@ -91,14 +122,16 @@ export default function BreastFeeding() {
     }
   };
 
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <View style={styles.container}>
-      <View style={[styles.perfil, cardShadow]}>
-        <Text style={styles.perfilNome}>Baby</Text>
-        <Text style={styles.perfilIdade}>Idade</Text>
-        <View style={styles.perfilAvatar}>
-          <Text style={styles.perfilAvatarText}>Foto</Text>
-        </View>
+      <View style={cardShadow}>
+        <BabyProfileSelector />
       </View>
 
       {/* botoes para selecionar o seio esquerdo ou direito */}
@@ -168,6 +201,33 @@ export default function BreastFeeding() {
         <Text style={styles.areaValue}>
           {savedTime !== null ? formatTime(savedTime) : '—'}
         </Text>
+      </View>
+
+      {/* Separar registros por tipo de alimentação */}
+      <View style={[styles.recordsContainer, cardShadow]}>
+        <Text style={styles.recordsTitle}>Amamentação</Text>
+        {records.filter(r => r.feedingType === 'Amamentação').length === 0 ? (
+          <Text style={styles.noRecords}>Nenhum registro</Text>
+        ) : (
+          records.filter(r => r.feedingType === 'Amamentação').map(r => (
+            <View key={r.id} style={styles.recordRow}>
+              <Text style={styles.recordText}>{r.babyName} — {r.data} {r.hora} — {formatTime(r.tempo)}</Text>
+            </View>
+          ))
+        )}
+      </View>
+
+      <View style={[styles.recordsContainer, cardShadow]}>
+        <Text style={styles.recordsTitle}>Mamadeira</Text>
+        {records.filter(r => r.feedingType === 'Mamadeira').length === 0 ? (
+          <Text style={styles.noRecords}>Nenhum registro</Text>
+        ) : (
+          records.filter(r => r.feedingType === 'Mamadeira').map(r => (
+            <View key={r.id} style={styles.recordRow}>
+              <Text style={styles.recordText}>{r.babyName} — {r.data} {r.hora} — {formatTime(r.tempo)}</Text>
+            </View>
+          ))
+        )}
       </View>
 
       {/* <View style={[styles.areaCard, cardShadow]}>
@@ -300,6 +360,31 @@ const styles = StyleSheet.create({
   areaValue: {
     fontSize: 20,
     fontWeight: '700',
+    color: colors.text,
+  },
+  recordsContainer: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  recordsTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  noRecords: {
+    color: colors.textSecondary,
+  },
+  recordRow: {
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  recordText: {
     color: colors.text,
   },
   modalOverlay: {

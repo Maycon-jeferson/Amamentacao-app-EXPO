@@ -1,5 +1,6 @@
 import React from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
+import BabyProfile from '../../components/BabyProfile';
 import { colors } from '../../constants/theme';
 
 const cardShadow = Platform.select({
@@ -16,8 +17,7 @@ export default function Baby() {
   return (
     <View style={styles.container}>
       <View style={[styles.card, cardShadow]}>
-        <Text style={styles.title}>Bebê</Text>
-        <Text style={styles.subtitle}>Informações e perfil do bebê em breve.</Text>
+        <BabyProfile />
       </View>
     </View>
   );
