@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useState } from 'react';
-import { Alert, FlatList, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../constants/theme';
 
 interface BreastfeedingRecord {
@@ -11,6 +11,8 @@ interface BreastfeedingRecord {
   hora: string;
   data: string;
   dataCompleta: string;
+  babyName?: string;
+  feedingType?: string;
 }
 
 const cardShadow = Platform.select({
@@ -96,12 +98,39 @@ export default function Table() {
   const renderRecord = ({ item }: { item: BreastfeedingRecord }) => (
     <Pressable 
       onPress={() => openMenu(item)}
-      style={({ pressed }) => [styles.tableRow, pressed && { opacity: 0.7 }]}
+      style={({ pressed }) => [styles.recordCard, cardShadow, pressed && { opacity: 0.8 }]}
     >
-      <Text style={[styles.tableCell, styles.dateCell]}>{item.data}</Text>
-      <Text style={[styles.tableCell, styles.timeCell]}>{item.hora}</Text>
-      <Text style={[styles.tableCell, styles.sideCell]}>{item.lado}</Text>
-      <Text style={[styles.tableCell, styles.durationCell]}>{formatTime(item.tempo)}</Text>
+      {/* Header do Card */}
+      <View style={styles.recordHeader}>
+        <View style={styles.recordDateTimeContainer}>
+          <Text style={styles.recordDate}>{item.data}</Text>
+          <Text style={styles.recordTime}>{item.hora}</Text>
+        </View>
+        <View style={[styles.recordSideBadge, item.lado === 'Esquerdo' ? styles.sideBadgeLeft : styles.sideBadgeRight]}>
+          <Text style={styles.recordSideBadgeText}>{item.lado[0]}</Text>
+        </View>
+      </View>
+
+      {/* Body do Card */}
+      <View style={styles.recordBody}>
+        <View style={styles.recordRow}>
+          <View style={styles.recordField}>
+            <Text style={styles.recordLabel}>Bebê</Text>
+            <Text style={styles.recordValue}>{item.babyName || '—'}</Text>
+          </View>
+          <View style={styles.recordField}>
+            <Text style={styles.recordLabel}>Tipo</Text>
+            <Text style={styles.recordValue}>{item.feedingType || '—'}</Text>
+          </View>
+        </View>
+
+        <View style={styles.recordRow}>
+          <View style={styles.recordField}>
+            <Text style={styles.recordLabel}>Duração</Text>
+            <Text style={styles.recordDuration}>{formatTime(item.tempo)}</Text>
+          </View>
+        </View>
+      </View>
     </Pressable>
   );
 
@@ -114,23 +143,14 @@ export default function Table() {
           <Text style={styles.emptyText}>Nenhum registro de mamada ainda.</Text>
         </View>
       ) : (
-        <ScrollView style={styles.tableContainer} horizontal={false}>
-          {/* Cabeçalho da tabela */}
-          <View style={[styles.tableHeader, cardShadow]}>
-            <Text style={[styles.tableHeaderCell, styles.dateCell]}>Data</Text>
-            <Text style={[styles.tableHeaderCell, styles.timeCell]}>Hora</Text>
-            <Text style={[styles.tableHeaderCell, styles.sideCell]}>Lado</Text>
-            <Text style={[styles.tableHeaderCell, styles.durationCell]}>Tempo</Text>
-          </View>
-
-          {/* Linhas da tabela */}
-          <FlatList
-            data={records}
-            renderItem={renderRecord}
-            keyExtractor={(item) => item.id.toString()}
-            scrollEnabled={false}
-          />
-        </ScrollView>
+        <FlatList
+          data={records}
+          renderItem={renderRecord}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.recordsListContent}
+          scrollEnabled={true}
+          showsVerticalScrollIndicator={true}
+        />
       )}
 
       {/* Modal de opções */}
@@ -165,120 +185,171 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     paddingTop: 24,
     paddingHorizontal: 16,
+    paddingBottom: 24,
   },
   pageTitle: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: 26,
+    fontWeight: '800',
     color: colors.text,
-    marginBottom: 16,
+    marginBottom: 20,
+    letterSpacing: 0.5,
   },
   card: {
     width: '100%',
-    paddingVertical: 32,
+    paddingVertical: 40,
     paddingHorizontal: 24,
     backgroundColor: colors.surface,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyText: {
-    fontSize: 15,
+    fontSize: 16,
     color: colors.textSecondary,
+    fontWeight: '500',
   },
   tableContainer: {
     flex: 1,
     marginBottom: 16,
-  },
-  tableHeader: {
-    flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    backgroundColor: colors.primary,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    marginBottom: 2,
-  },
-  tableHeaderCell: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.textOnPrimary,
-  },
-  tableRow: {
-    flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    borderRadius: 16,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: 1,
+    overflow: 'hidden',
   },
-  tableCell: {
-    fontSize: 12,
-    color: colors.text,
+  recordsListContent: {
+    paddingVertical: 8,
+    gap: 12,
   },
-  dateCell: {
-    flex: 1.2,
-    fontWeight: '500',
+  recordCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginHorizontal: 0,
+    overflow: 'hidden',
   },
-  timeCell: {
+  recordHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(200, 100, 150, 0.08)',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  recordDateTimeContainer: {
     flex: 1,
-    textAlign: 'center',
   },
-  sideCell: {
-    flex: 0.8,
-    textAlign: 'center',
+  recordDate: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 3,
+  },
+  recordTime: {
+    fontSize: 13,
     fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  recordSideBadge: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 50,
+  },
+  sideBadgeLeft: {
+    backgroundColor: 'rgba(100, 180, 200, 0.2)',
+  },
+  sideBadgeRight: {
+    backgroundColor: 'rgba(200, 100, 150, 0.2)',
+  },
+  recordSideBadgeText: {
+    fontSize: 14,
+    fontWeight: '800',
     color: colors.accent,
   },
-  durationCell: {
+  recordBody: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  recordRow: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 12,
+  },
+  recordField: {
     flex: 1,
-    textAlign: 'right',
-    fontWeight: '700',
+  },
+  recordLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  recordValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  recordDuration: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.primary,
   },
   menuOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
   },
   menuContent: {
     width: '100%',
-    maxWidth: 300,
-    paddingVertical: 16,
-    paddingHorizontal: 12,
+    maxWidth: 320,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
     backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: 16,
+    gap: 12,
   },
   menuTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 16,
-    paddingBottom: 12,
+    marginBottom: 12,
+    paddingBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   menuOption: {
-    paddingVertical: 12,
+    paddingVertical: 13,
     paddingHorizontal: 16,
-    borderRadius: 8,
-    marginBottom: 8,
-    backgroundColor: colors.accentLight,
+    borderRadius: 10,
+    backgroundColor: colors.surface,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   menuOptionText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
     color: colors.text,
   },
   deleteOption: {
-    backgroundColor: 'rgba(255, 59, 48, 0.15)',
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+    borderColor: '#FF3B30',
   },
   deleteOptionText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
     color: '#FF3B30',
   },

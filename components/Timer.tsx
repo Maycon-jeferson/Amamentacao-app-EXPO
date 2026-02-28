@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTimestampTimer } from '../hooks/useTimestampTimer';
 import { colors } from '../theme';
 
 type TimerProps = {
@@ -7,33 +8,16 @@ type TimerProps = {
 };
 
 const Timer: React.FC<TimerProps> = ({ onSaveTime }) => {
-  const [seconds, setSeconds] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
-  const intervaloRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (isRunning) {
-      intervaloRef.current = setInterval(() => {
-        setSeconds(prevSecond => prevSecond + 1);
-      }, 1000);
-    } else if (intervaloRef.current) {
-      clearInterval(intervaloRef.current as number);
-      intervaloRef.current = null;
-    }
-
-    return () => {
-      if (intervaloRef.current) {
-        clearInterval(intervaloRef.current as number);
-      }
-    };
-  }, [isRunning]);
+  const { elapsedSeconds, isRunning, startTimer, pauseTimer, stopTimer } =
+    useTimestampTimer();
 
   const toggleTimer = () => {
     if (isRunning) {
-      onSaveTime(seconds);
-      setSeconds(0);
+      const finalSeconds = stopTimer();
+      onSaveTime(finalSeconds);
+    } else {
+      startTimer();
     }
-    setIsRunning(prevState => !prevState);
   };
 
   const formatTime = (s: number) => {
@@ -44,7 +28,7 @@ const Timer: React.FC<TimerProps> = ({ onSaveTime }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.timeText}>{formatTime(seconds)}</Text>
+      <Text style={styles.timeText}>{formatTime(elapsedSeconds)}</Text>
       <Pressable
         onPress={toggleTimer}
         style={({ pressed }) => [

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import BabyProfileSelector from '../../components/BabyProfileSelector';
 import { colors } from '../../constants/theme';
+import { useTimestampTimer } from '../../hooks/useTimestampTimer';
 
 const cardShadow = Platform.select({
   ios: {
@@ -18,26 +19,13 @@ export default function BreastFeeding() {
   const [savedTime, setSavedTime] = useState<number | null>(null);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [selectedSide, setSelectedSide] = useState<'L' | 'R' | null>(null);
-  const [timerSeconds, setTimerSeconds] = useState<number>(0);
-  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
   const [timerStarted, setTimerStarted] = useState<boolean>(false);
   const [records, setRecords] = useState<any[]>([]);
   const [activeProfile, setActiveProfile] = useState<any | null>(null);
-
-
-  useEffect(() => {
-    let interval: number | undefined;
-
-    if (isTimerRunning) {
-      interval = setInterval(() => {
-        setTimerSeconds(prev => prev + 1);
-      }, 1000) as unknown as number;
-    }
-
-    return () => {
-      if (interval !== undefined) clearInterval(interval as number);
-    };
-  }, [isTimerRunning]);
+  
+  // Usar o novo hook que gerencia timestamps
+  const { elapsedSeconds, isRunning, startTimer, pauseTimer, stopTimer, resetTimer } =
+    useTimestampTimer();
 
   useEffect(() => {
     loadRecords();
@@ -71,36 +59,42 @@ export default function BreastFeeding() {
 
   const openModal = (side: 'L' | 'R') => {
     setSelectedSide(side);
-    setTimerSeconds(0);
-    setIsTimerRunning(false);
+    resetTimer();
+    setTimerStarted(false);
     setModalVisible(true);
   };
 
   const closeModal = () => {
     setModalVisible(false);
     setSelectedSide(null);
-    setTimerSeconds(0);
-    setIsTimerRunning(false);
+    resetTimer();
     setTimerStarted(false);
   };
 
   const handleStartTimer = () => {
     setTimerStarted(true);
-    setIsTimerRunning(true);
+    startTimer();
   };
 
   const handleTogglePause = () => {
-    setIsTimerRunning(!isTimerRunning);
+    if (isRunning) {
+      pauseTimer();
+    } else {
+      startTimer();
+    }
   };
 
   const saveBreastfeedingData = async () => {
     if (selectedSide === null) return;
 
+    // Finalizar o timer e obter o tempo final
+    const finalTime = stopTimer();
+
     const now = new Date();
     const breastfeedingRecord = {
       id: Date.now(),
       lado: selectedSide === 'L' ? 'Esquerdo' : 'Direito',
-      tempo: timerSeconds,
+      tempo: finalTime,
       hora: now.toLocaleTimeString('pt-BR'),
       data: now.toLocaleDateString('pt-BR'),
       dataCompleta: now.toISOString(),
@@ -114,7 +108,7 @@ export default function BreastFeeding() {
       loaded.push(breastfeedingRecord);
       await AsyncStorage.setItem('breastfeedingRecords', JSON.stringify(loaded));
       setRecords(loaded);
-      setSavedTime(timerSeconds);
+      setSavedTime(finalTime);
       closeModal();
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível salvar os dados');
@@ -174,9 +168,9 @@ export default function BreastFeeding() {
                   onPress={handleTogglePause}
                   style={styles.timerDisplay}
                 >
-                  <Text style={styles.timerText}>{formatTime(timerSeconds)}</Text>
+                  <Text style={styles.timerText}>{formatTime(elapsedSeconds)}</Text>
                   <Text style={styles.timerSubtext}>
-                    {isTimerRunning ? 'Toque para pausar' : 'Toque para retomar'}
+                    {isRunning ? 'Toque para pausar' : 'Toque para retomar'}
                   </Text>
                 </Pressable>
 
